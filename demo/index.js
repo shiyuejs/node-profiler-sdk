@@ -2,11 +2,13 @@ const sdk = require('../dist/index')
 
 const config = sdk.setAppID('xxxx')
 const profiler = new sdk.Profiler({
-	intervalRate: 10000,
-	repotLimit: 20
+	intervalRate: 5000,
+	repotLimit: 1
 }).install()
 
-profiler.repotHeapSnapshotFile()
-// const heap = profiler.getHeap()
-// console.log(config)
-// console.log(heap)
+profiler.event.on('reportHeap', (data) => {
+	console.log('reportHeap', Date.now())
+})
+
+const filePath = profiler.getHeapSnapshot()
+console.log('getHeapSnapshot-filePath', filePath)

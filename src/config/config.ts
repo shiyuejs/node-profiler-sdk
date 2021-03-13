@@ -3,7 +3,8 @@ import { IdefaultConfig } from "../model/config"
 const config: IdefaultConfig = {
 	appID: '',
 	profiler: {
-		heap: true
+		heap: true,
+		heapSnapshot: true
 	}
 }
 

@@ -2,6 +2,7 @@ import path from 'path'
 import resolve from 'rollup-plugin-node-resolve' // 依赖引用插件
 import commonjs from 'rollup-plugin-commonjs' // commonjs模块转换插件
 import ts from 'rollup-plugin-typescript2'
+import json from 'rollup-plugin-json'
 const getPath = _path => path.resolve(__dirname, _path)
 import packageJSON from './package.json'
 console.log(process.env.NODE_ENV)
@@ -24,6 +25,7 @@ const commonConf = {
     resolve(extensions),
     commonjs(),
     tsPlugin,
+	json()
   ]
 }
 // 需要导出的模块类型

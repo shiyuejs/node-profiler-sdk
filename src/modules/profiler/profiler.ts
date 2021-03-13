@@ -3,7 +3,7 @@
  * @description 性能监控基类，根据平台适配，统一获取runtime数据
  */
 import { isElectronRunTime, isNodeRunTime } from "../../lib/env"
-import { IProfilerOptions } from "../../model/profiler/profiler"
+import { IProfilerOptions, ProfilerEventAction, ProfilerModuleName } from "../../model/profiler/profiler"
 import { ElectronHeap } from '../../runtime/electron/heap'
 import { NodeHeap } from "../../runtime/node/heap"
 import { Uuid } from '../../lib/uuid'
@@ -15,8 +15,11 @@ import { Queue } from '../../lib/queue/queue'
 import { INTERVAL_RATE, REPOT_LIMIT } from "src/model/constant"
 import { Log } from '../../lib/log/log'
 import { starTimer } from '../../lib/timer/timer'
+import { ApiSendHeap } from '../../api/api'
+import { EventEmitter } from 'events'
 
 export class Profiler extends Map {
+	public event: EventEmitter = new EventEmitter()
 	protected name: string
 	private options: IProfilerOptions
 	private log: Log = new Log()
@@ -43,16 +46,19 @@ export class Profiler extends Map {
 	}
 
 	public getHeapInfo(): IAPISendHeapReq {
-		const heap: ElectronHeap | NodeHeap = this.get('HeapModule')
+		const heap: ElectronHeap | NodeHeap = this.get(ProfilerModuleName.HeapModule)
 		return {
 			heapInfo: heap.getHeap(),
 			heapSpaceInfo: heap.getHeapSpaceStatistics()
 		}
 	}
 
-	public async repotHeapSnapshotFile() {
-		const filePath = await this.getHeapSnapshotFileName()
-		this.log.info('repotHeapSnapshotFile', filePath)
+	public getHeapSnapshot(): string {
+		const timer = starTimer('getHeapSnapshotFileName')
+		const heapSnapshot: ElectronHeapSnapshot = this.get(ProfilerModuleName.HeapSnapshotModule)
+		const filePath = heapSnapshot.createHeapSnapshot()
+		timer.done()
+		return filePath
 	}
 
 	private init() {
@@ -71,16 +77,16 @@ export class Profiler extends Map {
 
 	private initHeapModule() {
 		if (isElectronRunTime) {
-			this.set('HeapModule', new ElectronHeap(this))
+			this.set(ProfilerModuleName.HeapModule, new ElectronHeap(this))
 		}
 		if (isNodeRunTime) {
-			this.set('HeapModule', new NodeHeap(this))
+			this.set(ProfilerModuleName.HeapModule, new NodeHeap(this))
 		}
 	}
 
 	private initHeapSnapshotModule() {
 		if (isElectronRunTime) {
-			this.set('HeapSnapshotModule', new ElectronHeapSnapshot(this))
+			this.set(ProfilerModuleName.HeapSnapshotModule, new ElectronHeapSnapshot(this))
 		}
 	}
 
@@ -90,14 +96,15 @@ export class Profiler extends Map {
 		}
 
 		const queue = new Queue<IAPISendHeapReq>(this.options.repotLimit)
-		queue.on('repot', (data: ReadonlyArray<IAPISendHeapReq>) => {
-			this.log.info('repot', data)
+		queue.on('repot', async (data: ReadonlyArray<IAPISendHeapReq>) => {
+			this.event.emit(ProfilerEventAction.reportHeap, data)
+			await ApiSendHeap(data)
 		})
 		const intervalInstance = new Intervalometer(this.options.intervalRate, (action: 'stop' | 'loop') => {
 			if (action === 'loop') {
 				const info = this.getHeapInfo()
 				queue.add(info)
-				this.log.info('HeapModule', queue.size)
+				this.log.info('intervalometer', queue.size)
 			}
 		})
 
@@ -108,13 +115,5 @@ export class Profiler extends Map {
 			}
 			return
 		}
-	}
-
-	private async getHeapSnapshotFileName(): Promise<string> {
-		const timer = starTimer('getHeapSnapshotFileName')
-		const heapSnapshot: ElectronHeapSnapshot = this.get('HeapSnapshotModule')
-		const filePath = await heapSnapshot.createHeapSnapshot()
-		timer.done()
-		return filePath
 	}
 }

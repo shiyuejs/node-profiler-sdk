@@ -17,6 +17,7 @@ export class Intervalometer {
 	}
 
 	private init = () => {
+		this.handle('loop')
 		this.timer = setInterval(() => {
 			this.handle('loop')
 		}, this.intervalRate)
