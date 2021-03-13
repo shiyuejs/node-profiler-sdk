@@ -1,0 +1,38 @@
+{
+  "name": "node-profiler-sdk",
+  "version": "1.0.0",
+  "description": "ndoe runtime profiler monitor",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "set NODE_ENV=developemnt&& rollup -c rollup.config.js -w",
+    "build": "rm -fr dist && set NODE_ENV=production&& rollup -c rollup.config.js",
+    "eslint": "eslint src --fix --ext .ts"
+  },
+  "author": "tencent.front",
+  "license": "ISC",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "rollup-typescript",
+    "typescript",
+    "es2015",
+    "rollup",
+    "npm"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0",
+    "eslint": "^7.21.0",
+    "eslint-config-alloy": "^3.10.0",
+    "eslint-plugin-typescript": "^0.14.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-typescript2": "^0.30.0",
+    "typescript": "^4.2.3"
+  }
+}
